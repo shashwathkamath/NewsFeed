@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kamath.newsfeed.news.domain.model.NewsDto
 import com.kamath.newsfeed.news.domain.repository.NewsRepository
-import com.kamath.newsfeed.news.util.NewsBusEvent
-import com.kamath.newsfeed.news.util.sendEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,8 +13,9 @@ import kotlinx.coroutines.launch
 sealed class NewsScreenState {
     object Loading : NewsScreenState()
     data class Success(val articles: List<NewsDto>) : NewsScreenState()
-    object Error : NewsScreenState()
+    data class Error(val errorMessage:String) : NewsScreenState()
 }
+
 
 @HiltViewModel
 class NewsScreenViewmodel @Inject constructor(
@@ -38,8 +37,7 @@ class NewsScreenViewmodel @Inject constructor(
                     _uiState.value = NewsScreenState.Success(listOfArticles)
                 }
                 .onLeft {
-
-                    sendEvent(NewsBusEvent.Toast("Some error occurred ${it.error.error}"))
+                    _uiState.value = NewsScreenState.Error("Some error occured ${it.error.error}")
                 }
         }
     }
