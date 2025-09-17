@@ -38,6 +38,7 @@ class NewsScreenViewmodel @Inject constructor(
                     _uiState.value = NewsScreenState.Success(listOfArticles)
                 }
                 .onLeft {
+
                     sendEvent(NewsBusEvent.Toast("Some error occurred ${it.error.error}"))
                 }
         }
