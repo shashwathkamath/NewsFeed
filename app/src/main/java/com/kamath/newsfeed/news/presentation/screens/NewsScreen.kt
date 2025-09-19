@@ -78,7 +78,7 @@ fun NewsScreenContent(
                     }
                 }
                 is NewsScreenState.Error -> {
-                    Text("There has been issue")
+                    Text("There has been issue ${state.errorMessage}")
                 }
             }
         }
