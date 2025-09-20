@@ -47,7 +47,7 @@ class NewsScreenViewmodel @Inject constructor(
                     _uiState.value = NewsScreenState.Success(listOfArticles)
                 }
                 .onLeft {
-                    _newsScreenEvents.emit(NewsScreenEvent.ShowSnackBar("Error occured due to ${it.error.error}"))
+                    _newsScreenEvents.emit(NewsScreenEvent.ShowSnackBar("Error occured due to $it"))
                 }
         }
     }

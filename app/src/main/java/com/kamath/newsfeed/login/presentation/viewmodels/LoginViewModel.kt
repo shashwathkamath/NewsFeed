@@ -4,12 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kamath.newsfeed.login.domain.model.LoginRequest
 import com.kamath.newsfeed.login.domain.repository.LoginRepository
+import com.kamath.newsfeed.login.presentation.viewmodels.LoginScreenState.Error
+import com.kamath.newsfeed.login.presentation.viewmodels.LoginScreenState.Success
+import com.kamath.newsfeed.util.errorHandlers.network.ApiError
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
-
 
 sealed class LoginScreenState {
     object Loading : LoginScreenState()
@@ -24,15 +29,21 @@ sealed class LoginScreenState {
 }
 
 sealed class LoginScreenEvent {
-    data class onUsernameChanged(val username: String) : LoginScreenEvent()
-    data class onPasswordChanged(val password: String) : LoginScreenEvent()
-    object onLoginClicked : LoginScreenEvent()
+    data class OnUsernameChange(val username: String) : LoginScreenEvent()
+    data class OnPasswordChange(val password: String) : LoginScreenEvent()
+    object OnButtonClick : LoginScreenEvent()
+}
+
+sealed class LoginTransitionEvent {
+    data class ShowSnackBar(val message: String) : LoginTransitionEvent()
+    object NavigateToHome : LoginTransitionEvent()
 }
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val repository: LoginRepository
 ) : ViewModel() {
+
     private val _uiState = MutableStateFlow<LoginScreenState>(
         LoginScreenState.Input(
             username = "",
@@ -42,48 +53,76 @@ class LoginViewModel @Inject constructor(
     )
     val uiState = _uiState.asStateFlow()
 
+    private val _eventFlow = MutableSharedFlow<LoginTransitionEvent>(replay = 0)
+    val eventFlow = _eventFlow.asSharedFlow()
     fun onEvent(event: LoginScreenEvent) {
         when (event) {
-            is LoginScreenEvent.onUsernameChanged -> {
-                val current = _uiState.value
-                if (current is LoginScreenState.Input) {
-                    val newUsername = event.username
-                    val buttonEnabled = newUsername.isNotBlank() && current.password.isNotBlank()
-                    _uiState.value =
-                        current.copy(username = newUsername, isButtonEnabled = buttonEnabled)
+            is LoginScreenEvent.OnUsernameChange -> {
+                val currentState = _uiState.value
+                if (currentState is LoginScreenState.Input) {
+                    val username = event.username
+                    val buttonEnabled = username.isNotEmpty() && currentState.password.isNotBlank()
+                    _uiState.value = currentState.copy(
+                        username = username,
+                        isButtonEnabled = buttonEnabled
+                    )
                 }
             }
 
-            is LoginScreenEvent.onPasswordChanged -> {
-                val current = _uiState.value
-                if (current is LoginScreenState.Input) {
-                    val newPassword = event.password
-                    val buttonEnabled = newPassword.isNotBlank() && current.username.isNotBlank()
-                    _uiState.value =
-                        current.copy(password = newPassword, isButtonEnabled = buttonEnabled)
+            is LoginScreenEvent.OnPasswordChange -> {
+                val currentState = _uiState.value
+                if (currentState is LoginScreenState.Input) {
+                    val password = event.password
+                    val buttonEnabled = password.isNotEmpty() && currentState.username.isNotEmpty()
+                    _uiState.value = currentState.copy(
+                        password = password,
+                        isButtonEnabled = buttonEnabled
+                    )
                 }
             }
 
-            is LoginScreenEvent.onLoginClicked -> {
-                val current = _uiState.value
-                if (current is LoginScreenState.Input && current.isButtonEnabled) {
+            is LoginScreenEvent.OnButtonClick -> {
+                Timber.d("Inside viewmodel")
+                val currentState = _uiState.value
+                if (currentState is LoginScreenState.Input && currentState.isButtonEnabled) {
                     viewModelScope.launch {
                         _uiState.value = LoginScreenState.Loading
                         repository.login(
                             LoginRequest(
-                                current.username,
-                                current.password
+                                currentState.username,
+                                currentState.password
                             )
                         )
-                            .onRight {
-                                _uiState.value = LoginScreenState.Success("Login Successful for ${it.username}")
-                            }.onLeft {
-                                _uiState.value = LoginScreenState.Error("Credentials did not match or some error ${it.error}")
+                            .onRight { response ->
+                                Timber.d("response ---> $response")
+                                _uiState.value =
+                                    Success("LoginSuccessfull for ${response.username}")
+                                _eventFlow.emit(LoginTransitionEvent.NavigateToHome)
+                            }
+                            .onLeft { networkError ->
+                                Timber.d("Issue $networkError")
+                                when (networkError.apiError) {
+                                    ApiError.BAD_CREDENTIALS -> {
+                                        _uiState.value = Error(ApiError.BAD_CREDENTIALS.error)
+                                    }
+
+                                    ApiError.SERVER_ERROR -> {
+                                        _uiState.value = Error(ApiError.SERVER_ERROR.error)
+                                    }
+
+                                    ApiError.IO_EXCEPTION -> {
+                                        _uiState.value = Error(ApiError.IO_EXCEPTION.error)
+                                    }
+
+                                    ApiError.UNKOWN_EXCEPTION -> {
+                                        _uiState.value = Error(ApiError.UNKOWN_EXCEPTION.error)
+                                        _eventFlow.emit(LoginTransitionEvent.ShowSnackBar(ApiError.UNKOWN_EXCEPTION.error))
+                                    }
+                                }
                             }
                     }
                 }
             }
         }
     }
-
 }

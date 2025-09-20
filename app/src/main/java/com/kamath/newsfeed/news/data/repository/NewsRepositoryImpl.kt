@@ -4,8 +4,8 @@ import arrow.core.Either
 import com.kamath.newsfeed.news.data.remote.NewsApi
 import com.kamath.newsfeed.news.domain.model.NewsResponse
 import com.kamath.newsfeed.news.domain.repository.NewsRepository
-import com.kamath.newsfeed.news.util.NetworkError
-import com.kamath.newsfeed.news.util.toNetworkError
+import com.kamath.newsfeed.util.errorHandlers.network.NetworkError
+import com.kamath.newsfeed.util.errorHandlers.network.toNetworkError
 import jakarta.inject.Inject
 import timber.log.Timber
 

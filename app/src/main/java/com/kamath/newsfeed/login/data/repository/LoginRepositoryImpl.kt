@@ -5,8 +5,9 @@ import com.kamath.newsfeed.login.data.remote.LoginApi
 import com.kamath.newsfeed.login.domain.model.LoginRequest
 import com.kamath.newsfeed.login.domain.model.LoginResponse
 import com.kamath.newsfeed.login.domain.repository.LoginRepository
-import com.kamath.newsfeed.news.util.NetworkError
-import com.kamath.newsfeed.news.util.toNetworkError
+import com.kamath.newsfeed.util.errorHandlers.network.NetworkError
+import com.kamath.newsfeed.util.errorHandlers.network.toNetworkError
+
 import jakarta.inject.Inject
 import timber.log.Timber
 
