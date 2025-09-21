@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kamath.newsfeed.login.domain.model.LoginRequest
 import com.kamath.newsfeed.login.domain.repository.LoginRepository
-import com.kamath.newsfeed.login.presentation.viewmodels.LoginScreenState.Success
 import com.kamath.newsfeed.util.errorHandlers.network.ApiError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,8 +22,6 @@ sealed class LoginScreenState {
         val isButtonEnabled: Boolean,
         val errorMessage: String? = null
     ) : LoginScreenState()
-
-    data class Success(val message: String) : LoginScreenState()
 }
 
 sealed class LoginScreenEvent {
@@ -81,7 +78,6 @@ class LoginViewModel @Inject constructor(
             }
 
             is LoginScreenEvent.OnButtonClick -> {
-                Timber.d("Inside viewmodel")
                 val currentState = _uiState.value
                 if (currentState is LoginScreenState.Input && currentState.isButtonEnabled) {
                     viewModelScope.launch {
@@ -93,8 +89,6 @@ class LoginViewModel @Inject constructor(
                             )
                         )
                             .onRight { response ->
-                                _uiState.value =
-                                    Success("LoginSuccessfull for ${response.username}")
                                 _eventFlow.emit(LoginTransitionEvent.NavigateToHome)
                             }
                             .onLeft { networkError ->
