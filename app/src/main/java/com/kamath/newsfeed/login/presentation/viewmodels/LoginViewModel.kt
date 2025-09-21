@@ -93,7 +93,6 @@ class LoginViewModel @Inject constructor(
                             )
                         )
                             .onRight { response ->
-                                Timber.d("response ---> $response")
                                 _uiState.value =
                                     Success("LoginSuccessfull for ${response.username}")
                                 _eventFlow.emit(LoginTransitionEvent.NavigateToHome)
