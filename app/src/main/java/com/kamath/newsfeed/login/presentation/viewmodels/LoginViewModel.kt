@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kamath.newsfeed.login.domain.model.LoginRequest
 import com.kamath.newsfeed.login.domain.repository.LoginRepository
-import com.kamath.newsfeed.login.presentation.viewmodels.LoginScreenState.Error
 import com.kamath.newsfeed.login.presentation.viewmodels.LoginScreenState.Success
 import com.kamath.newsfeed.util.errorHandlers.network.ApiError
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,11 +20,11 @@ sealed class LoginScreenState {
     data class Input(
         val username: String,
         val password: String,
-        val isButtonEnabled: Boolean
+        val isButtonEnabled: Boolean,
+        val errorMessage: String? = null
     ) : LoginScreenState()
 
     data class Success(val message: String) : LoginScreenState()
-    data class Error(val message: String) : LoginScreenState()
 }
 
 sealed class LoginScreenEvent {
@@ -94,31 +93,26 @@ class LoginViewModel @Inject constructor(
                             )
                         )
                             .onRight { response ->
-                                Timber.d("response ---> $response")
                                 _uiState.value =
                                     Success("LoginSuccessfull for ${response.username}")
                                 _eventFlow.emit(LoginTransitionEvent.NavigateToHome)
                             }
                             .onLeft { networkError ->
                                 Timber.d("Issue $networkError")
-                                when (networkError.apiError) {
-                                    ApiError.BAD_CREDENTIALS -> {
-                                        _uiState.value = Error(ApiError.BAD_CREDENTIALS.error)
-                                    }
 
-                                    ApiError.SERVER_ERROR -> {
-                                        _uiState.value = Error(ApiError.SERVER_ERROR.error)
-                                    }
-
-                                    ApiError.IO_EXCEPTION -> {
-                                        _uiState.value = Error(ApiError.IO_EXCEPTION.error)
-                                    }
-
-                                    ApiError.UNKOWN_EXCEPTION -> {
-                                        _uiState.value = Error(ApiError.UNKOWN_EXCEPTION.error)
-                                        _eventFlow.emit(LoginTransitionEvent.ShowSnackBar(ApiError.UNKOWN_EXCEPTION.error))
-                                    }
+                                val errorMsg = when (networkError.apiError) {
+                                    ApiError.BAD_CREDENTIALS -> "Invalid credentials"
+                                    ApiError.SERVER_ERROR -> "Server issue"
+                                    ApiError.IO_EXCEPTION -> "Something went wrong"
+                                    ApiError.UNKOWN_EXCEPTION -> ApiError.UNKOWN_EXCEPTION.error
                                 }
+                                _uiState.value = LoginScreenState.Input(
+                                    username = "",
+                                    password = "",
+                                    isButtonEnabled = false,
+                                    errorMessage = errorMsg
+                                )
+                                _eventFlow.emit(LoginTransitionEvent.ShowSnackBar(errorMsg))
                             }
                     }
                 }
