@@ -6,12 +6,6 @@ plugins {
     // If you're using KSP (recommended for Kotlin projects)
     alias(libs.plugins.ksp)
 }
-//val mockitoAgent by configurations.creating {
-//    isTransitive = false
-//}
-//tasks.withType<Test>().configureEach {
-//    jvmArgs("-javaagent:${mockitoAgent.asPath}")
-//}
 android {
     namespace = "com.kamath.newsfeed"
     compileSdk = 36
@@ -86,8 +80,7 @@ dependencies {
     implementation(libs.timber)
 
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.junit) // Core JUnit testing framework. [1]
-    testImplementation(libs.kotlinx.coroutines.test.v181) // For testing coroutines and using TestDispatchers. [2]
+    testImplementation(libs.junit) // Core JUnit testing framework. [1] // For testing coroutines and using TestDispatchers. [2]
     testImplementation(libs.mockito.kotlin) // Mocking library for Kotlin. [3, 4]
     testImplementation(libs.mockito.inline) // Needed to mock final classes and methods, common in Kotlin. [3, 4]
     testImplementation(libs.androidx.core.testing) // For InstantTaskExecutorRule to test components using main looper. [5]
