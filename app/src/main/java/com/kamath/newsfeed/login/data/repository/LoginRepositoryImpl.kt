@@ -16,6 +16,7 @@ class LoginRepositoryImpl @Inject constructor(
 ): LoginRepository {
     override suspend fun login(request: LoginRequest): Either<NetworkError, LoginResponse> {
         return Either.catch {
+            Timber.d("Inside LoginRepo ${request.username}, ${request.password}")
             val response = loginApi.login(request)
             Timber.d("Inside LoginRepo $response")
             response

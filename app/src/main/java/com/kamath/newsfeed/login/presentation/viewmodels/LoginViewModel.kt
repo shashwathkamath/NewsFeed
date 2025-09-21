@@ -80,6 +80,7 @@ class LoginViewModel @Inject constructor(
             is LoginScreenEvent.OnButtonClick -> {
                 val currentState = _uiState.value
                 if (currentState is LoginScreenState.Input && currentState.isButtonEnabled) {
+                    Timber.d("%s%s", currentState.username, currentState.password)
                     viewModelScope.launch {
                         _uiState.value = LoginScreenState.Loading
                         repository.login(
