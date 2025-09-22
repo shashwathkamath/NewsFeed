@@ -2,7 +2,6 @@ package com.kamath.newsfeed.news.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kamath.newsfeed.login.presentation.viewmodels.LoginScreenState
 import com.kamath.newsfeed.news.domain.model.NewsDto
 import com.kamath.newsfeed.news.domain.repository.NewsRepository
 import com.kamath.newsfeed.util.errorHandlers.network.ApiError
@@ -22,6 +21,7 @@ sealed class NewsScreenState {
 
 sealed class NewsScreenEvent {
     data class ShowSnackBar(val message: String) : NewsScreenEvent()
+    //lets create an event to navigate to detail screen
 }
 
 
