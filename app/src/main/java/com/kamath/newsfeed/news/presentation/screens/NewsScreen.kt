@@ -1,14 +1,15 @@
 package com.kamath.newsfeed.news.presentation.screens
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -17,69 +18,76 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kamath.newsfeed.news.presentation.components.NewsItem
 import com.kamath.newsfeed.news.presentation.viewmodels.NewsScreenEvent
 import com.kamath.newsfeed.news.presentation.viewmodels.NewsScreenState
 import com.kamath.newsfeed.news.presentation.viewmodels.NewsScreenViewmodel
-import kotlinx.coroutines.launch
+import timber.log.Timber
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun NewsScreen(
     viewmodel: NewsScreenViewmodel = hiltViewModel()
 ) {
     val uiState by viewmodel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState()}
-    val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        viewmodel.newsScreenEvents.collect { event ->
-            when(event){
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(viewmodel.uiEvent, snackbarHostState) {
+        viewmodel.uiEvent.collect { event ->
+            when (event) {
                 is NewsScreenEvent.ShowSnackBar -> {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(event.message)
-                    }
+                    snackbarHostState.showSnackbar(
+                        message = event.message,
+                        duration = SnackbarDuration.Short
+                    )
                 }
             }
         }
     }
-    NewsScreenContent(uiState,snackbarHostState)
+    NewsScreenContent(uiState, snackbarHostState)
 }
 
-@SuppressLint("CoroutineCreationDuringComposition")
-@Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun NewsScreenContent(
-    state: NewsScreenState,
-    snackbarHostState: SnackbarHostState) {
+@Composable
+fun NewsScreenContent(uiState: NewsScreenState, snackbarHostState: SnackbarHostState) {
+
     Scaffold(
-        topBar = {
-            TopAppBar({
-                Text("NewsFeed")
-            })
-        },
+        modifier = Modifier.fillMaxSize(),
+        topBar = { TopAppBar({ Text("Latest News") }) },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when (state) {
-                is NewsScreenState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.padding(paddingValues))
-                }
-                is NewsScreenState.Success -> {
-                    LazyColumn{
-                        items(state.articles){article ->
-                            Text(article.title)
-                        }
+        when (uiState) {
+            is NewsScreenState.Success -> {
+                val news = uiState.news
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(paddingValues)
+                ) {
+                    items(news) {
+                        NewsItem(it, {
+                            Timber.d("${it.url} got clicked")
+                        })
                     }
                 }
-                is NewsScreenState.Error -> {
-                    Text("There has been issue ${state.errorMessage}")
+            }
+
+            is NewsScreenState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .height(100.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
+            }
+
+            is NewsScreenState.Error -> {
+
             }
         }
     }

@@ -85,4 +85,8 @@ dependencies {
     testImplementation(libs.mockito.inline) // Needed to mock final classes and methods, common in Kotlin. [3, 4]
     testImplementation(libs.androidx.core.testing) // For InstantTaskExecutorRule to test components using main looper. [5]
     testImplementation(libs.turbine)
+
+    //coil
+    implementation("io.coil-kt:coil:2.7.0")
+    implementation("io.coil-kt:coil-compose:2.7.0")
 }
