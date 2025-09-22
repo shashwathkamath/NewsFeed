@@ -2,8 +2,10 @@ package com.kamath.newsfeed.news.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kamath.newsfeed.login.presentation.viewmodels.LoginScreenState
 import com.kamath.newsfeed.news.domain.model.NewsDto
 import com.kamath.newsfeed.news.domain.repository.NewsRepository
+import com.kamath.newsfeed.util.errorHandlers.network.ApiError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,11 +17,11 @@ import kotlinx.coroutines.launch
 sealed class NewsScreenState {
     object Loading : NewsScreenState()
     data class Success(val articles: List<NewsDto>) : NewsScreenState()
-    data class Error(val errorMessage:String) : NewsScreenState()
+    data class Error(val errorMessage: String) : NewsScreenState()
 }
 
-sealed class NewsScreenEvent{
-    data class ShowSnackBar(val message:String): NewsScreenEvent()
+sealed class NewsScreenEvent {
+    data class ShowSnackBar(val message: String) : NewsScreenEvent()
 }
 
 
@@ -47,7 +49,14 @@ class NewsScreenViewmodel @Inject constructor(
                     _uiState.value = NewsScreenState.Success(listOfArticles)
                 }
                 .onLeft {
-                    _newsScreenEvents.emit(NewsScreenEvent.ShowSnackBar("Error occured due to $it"))
+                    val errorMessage = when (it.apiError) {
+                        ApiError.BAD_CREDENTIALS -> "Invalid credentials"
+                        ApiError.SERVER_ERROR -> "Server issue"
+                        ApiError.IO_EXCEPTION -> "Something went wrong"
+                        ApiError.UNKOWN_EXCEPTION -> ApiError.UNKOWN_EXCEPTION.error
+                    }
+                    _uiState.value = NewsScreenState.Error(errorMessage)
+                    _newsScreenEvents.emit(NewsScreenEvent.ShowSnackBar("Error occured due to $errorMessage"))
                 }
         }
     }
