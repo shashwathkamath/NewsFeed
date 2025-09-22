@@ -1,3 +1,6 @@
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -9,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kamath.newsfeed.login.presentation.components.LoginScreenContent
@@ -42,27 +46,42 @@ internal fun LoginScreen(
         }
     }
     Scaffold(
-        topBar = { Text("Login") },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
-        LoginScreenContent(
-            modifier = Modifier.padding(paddingValues),
-            uiState,
-            onUsernameChange = {
-                viewmodel.onEvent(
-                    LoginScreenEvent.OnUsernameChange(it)
-                )
-            },
-            onPasswordChange = {
-                viewmodel.onEvent(
-                    LoginScreenEvent.OnPasswordChange(it)
-                )
-            },
-            onLoginClick = {
-                viewmodel.onEvent(
-                    LoginScreenEvent.OnButtonClick
-                )
+        topBar = {
+            Box(
+                modifier = Modifier
+                    .height(40.dp)
+                    .fillMaxSize()
+            ) {
+                Text("Login")
             }
-        )
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        modifier = Modifier.padding(top = 20.dp)
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+        ) {
+            LoginScreenContent(
+                modifier = Modifier.padding(paddingValues),
+                uiState,
+                onUsernameChange = {
+                    viewmodel.onEvent(
+                        LoginScreenEvent.OnUsernameChange(it)
+                    )
+                },
+                onPasswordChange = {
+                    viewmodel.onEvent(
+                        LoginScreenEvent.OnPasswordChange(it)
+                    )
+                },
+                onLoginClick = {
+                    viewmodel.onEvent(
+                        LoginScreenEvent.OnButtonClick
+                    )
+                }
+            )
+        }
     }
 }
