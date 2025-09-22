@@ -15,48 +15,40 @@ import kotlinx.coroutines.launch
 
 sealed class NewsScreenState {
     object Loading : NewsScreenState()
-    data class Success(val articles: List<NewsDto>) : NewsScreenState()
-    data class Error(val errorMessage: String) : NewsScreenState()
+    data class Success(val news: List<NewsDto>) : NewsScreenState()
+    data class Error(val error: String) : NewsScreenState()
 }
 
 sealed class NewsScreenEvent {
     data class ShowSnackBar(val message: String) : NewsScreenEvent()
-    //lets create an event to navigate to detail screen
 }
-
 
 @HiltViewModel
 class NewsScreenViewmodel @Inject constructor(
     private val newsRepository: NewsRepository
 ) : ViewModel() {
 
-    private val _newsScreenEvents = MutableSharedFlow<NewsScreenEvent>()
-    val newsScreenEvents = _newsScreenEvents.asSharedFlow()
-
     private val _uiState = MutableStateFlow<NewsScreenState>(NewsScreenState.Loading)
     val uiState = _uiState.asStateFlow()
+
+    private val _uiEvent = MutableSharedFlow<NewsScreenEvent>(replay = 0)
+    val uiEvent = _uiEvent.asSharedFlow()
 
     init {
         fetchNews()
     }
 
     private fun fetchNews() {
-        NewsScreenState.Loading
         viewModelScope.launch {
+            _uiState.value = NewsScreenState.Loading
             newsRepository.getNews()
                 .onRight {
-                    val listOfArticles = it.articles
-                    _uiState.value = NewsScreenState.Success(listOfArticles)
+                    val newsArticles = it.articles
+                    _uiState.value = NewsScreenState.Success(newsArticles)
                 }
                 .onLeft {
-                    val errorMessage = when (it.apiError) {
-                        ApiError.BAD_CREDENTIALS -> "Invalid credentials"
-                        ApiError.SERVER_ERROR -> "Server issue"
-                        ApiError.IO_EXCEPTION -> "Something went wrong"
-                        ApiError.UNKOWN_EXCEPTION -> ApiError.UNKOWN_EXCEPTION.error
-                    }
-                    _uiState.value = NewsScreenState.Error(errorMessage)
-                    _newsScreenEvents.emit(NewsScreenEvent.ShowSnackBar("Error occured due to $errorMessage"))
+                    val errorMessage = it.apiError.error
+                    _uiEvent.emit(NewsScreenEvent.ShowSnackBar(errorMessage))
                 }
         }
     }

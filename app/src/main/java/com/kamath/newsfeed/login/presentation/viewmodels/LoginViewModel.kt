@@ -92,15 +92,8 @@ class LoginViewModel @Inject constructor(
                             .onRight { response ->
                                 _eventFlow.emit(LoginTransitionEvent.NavigateToHome)
                             }
-                            .onLeft { networkError ->
-                                Timber.d("Issue $networkError")
-
-                                val errorMsg = when (networkError.apiError) {
-                                    ApiError.BAD_CREDENTIALS -> "Invalid credentials"
-                                    ApiError.SERVER_ERROR -> "Server issue"
-                                    ApiError.IO_EXCEPTION -> "Something went wrong"
-                                    ApiError.UNKOWN_EXCEPTION -> ApiError.UNKOWN_EXCEPTION.error
-                                }
+                            .onLeft {
+                                val errorMsg = it.apiError.error
                                 _uiState.value = LoginScreenState.Input(
                                     username = "",
                                     password = "",
